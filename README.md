@@ -1,2 +1,2 @@
-###v2_streams
+#v2_streams
 Streaming Connector for DuckDB written in Go
