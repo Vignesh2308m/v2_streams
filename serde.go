@@ -11,13 +11,13 @@ func NewJSONComp() *JSONComp {
 	return &JSONComp{}
 }
 
-func (j *JSONComp) decode(data []byte) map[string]interface{} {
-	var m map[string]interface{}
+func (j *JSONComp) decode(inp chan []byte, out chan map[string]interface{}) {
+	for i := range inp {
+		var m map[string]interface{}
 
-	if err := json.Unmarshal(data, &m); err != nil {
-		panic(err)
+		if err := json.Unmarshal(i, &m); err != nil {
+			fmt.Println(err)
+		}
+		out <- m
 	}
-	fmt.Println(m)
-
-	return m
 }

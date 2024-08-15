@@ -10,8 +10,13 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func Kafka() {
+type KafkaReader struct {
+	cons    *kafka.Consumer
+	topic   string
+	sigchan chan os.Signal
+}
 
+func NewKafkaReader(topic string) *KafkaReader {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		// User-specific properties that you must set
 		"bootstrap.servers": "localhost:9092",
@@ -24,30 +29,34 @@ func Kafka() {
 		os.Exit(1)
 	}
 
-	topic := "quickstart-events"
 	err = c.SubscribeTopics([]string{topic}, nil)
 	// Set up a channel for handling Ctrl-C, etc
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Process messages
+	return &KafkaReader{
+		cons:    c,
+		topic:   topic,
+		sigchan: sigchan,
+	}
+}
+
+func (c *KafkaReader) Read(out chan []byte) {
 	run := true
 	for run {
 		select {
-		case sig := <-sigchan:
+		case sig := <-c.sigchan:
 			fmt.Printf("Caught signal %v: terminating\n", sig)
 			run = false
 		default:
-			ev, err := c.ReadMessage(100 * time.Millisecond)
+			ev, err := c.cons.ReadMessage(100 * time.Millisecond)
 			if err != nil {
 				// Errors are informational and automatically handled by the consumer
 				continue
 			}
-			fmt.Printf("Consumed event from topic %s: key = %-10s value = %s\n",
-				*ev.TopicPartition.Topic, string(ev.Key), string(ev.Value))
+			out <- ev.Value
 		}
 	}
-
-	c.Close()
+	c.cons.Close()
 
 }
