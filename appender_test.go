@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 )
@@ -14,18 +13,9 @@ func TestAppender(t *testing.T) {
 		print(err)
 	}
 
-	con, err := d.Connect()
-	if err != nil {
-		print(err)
-	}
+	a := NewAppender(d, "", "test")
 
-	a := NewAppender(con, "test")
-	a.Append(int32(1))
-
-	res := sql.OpenDB(d.conn).QueryRowContext(context.Background(), "SELECT * FROM test")
-	var b int32
-	res.Scan(&b)
-	print(b)
+	print(a.column_name[0])
 	//t.Errorf("Value Mismatch", b, 1)
 
 }

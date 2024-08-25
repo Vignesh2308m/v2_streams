@@ -10,9 +10,18 @@ import (
 
 type Appender struct {
 	appender_conn *duckdb.Appender
-	schema_name   map[int8]string
+	column_name   []string
 	table_name    string
 	counter       int
+}
+
+type tbl_desc struct {
+	col_name  string
+	col_type  string
+	col_null  string
+	col_key   string
+	col_def   string
+	col_extra string
 }
 
 func NewAppender(con *DuckDb, schema, table string) *Appender {
@@ -25,22 +34,29 @@ func NewAppender(con *DuckDb, schema, table string) *Appender {
 		print(err)
 	}
 
-	res, err := sql.OpenDB(con.conn).QueryContext(context.Background(), fmt.Sprint("DESCRIBE %s", table))
+	res, err := sql.OpenDB(con.conn).QueryContext(context.Background(), fmt.Sprintf("DESCRIBE %s", table))
 
 	if err != nil {
 		print("Set schema failed")
 	}
 
-	i := 0
+	columns := []string{}
 
 	for res.Next() {
-		var s *string
-		res.Scan(&s)
-		a.AppendRow()
-		i++
+		var t tbl_desc
+		res.Scan(&t.col_name,
+			&t.col_type,
+			&t.col_null,
+			&t.col_key,
+			&t.col_def,
+			&t.col_extra)
+		columns = append(columns, t.col_name)
 	}
 
-	return &Appender{}
+	return &Appender{appender_conn: a,
+		column_name: columns,
+		table_name:  table,
+		counter:     0}
 }
 func (a *Appender) CloseAppender() {
 	a.appender_conn.Close()

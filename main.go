@@ -19,18 +19,25 @@ func main() {
 		print(err)
 	}
 
-	sql.OpenDB(d.conn).Exec("CREATE TABLE test (i INTEGER)")
+	_, err = sql.OpenDB(d.conn).Exec("CREATE TABLE test (i INTEGER, j VARCHAR)")
+	if err != nil {
+		print("Table creation failed")
+	}
 
-	res, err := sql.OpenDB(d.conn).QueryContext(context.Background(), "DESCRIBE test")
+	_, err = sql.OpenDB(d.conn).Exec("INSERT INTO test VALUES (1, 'a')")
+	if err != nil {
+		print("Insert failed")
+	}
+
+	res, err := sql.OpenDB(d.conn).QueryContext(context.Background(), "SELECT * FROM test")
 
 	if err != nil {
 		print("Query Error")
 	}
 
-	var abs ABS
+	var abs string
 	res.Next()
-	res.Scan(&abs.a, &abs.b)
-	print(abs.a)
-	print(abs.b)
+	res.Scan(&abs)
+	print(abs)
 
 }
