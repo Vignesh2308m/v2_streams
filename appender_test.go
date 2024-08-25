@@ -19,7 +19,7 @@ func TestAppender(t *testing.T) {
 		print(err)
 	}
 
-	a := NewAppender(con, "", "test")
+	a := NewAppender(con, "test")
 	a.Append(int32(1))
 
 	res := sql.OpenDB(d.conn).QueryRowContext(context.Background(), "SELECT * FROM test")

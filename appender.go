@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"database/sql/driver"
+	"fmt"
 
 	"github.com/marcboeker/go-duckdb"
 )
 
 type Appender struct {
 	appender_conn *duckdb.Appender
-	schema_name   string
+	schema_name   map[int8]string
 	table_name    string
+	counter       int
 }
 
 func NewAppender(con driver.Conn, schema, table string) *Appender {
@@ -25,13 +29,29 @@ func NewAppender(con driver.Conn, schema, table string) *Appender {
 	}
 }
 
+func (a *Appender) SetSchema(d *duckdb.Connector) {
+	res, err := sql.OpenDB(d).QueryContext(context.Background(), fmt.Sprint("DESCRIBE %s", a.table_name))
+	if err != nil {
+		print("Set schema failed")
+	}
+	i := 0
+
+	for res.Next() {
+		var s *string
+		res.Scan(&s)
+		a.table_name[i] = s
+		i++
+	}
+}
 func (a *Appender) CloseAppender() {
 	a.appender_conn.Close()
 }
 
-func (a *Appender) Append(val int32) {
-	a.appender_conn.AppendRow(val)
-	if int32(val)%100 == 0 {
+func (a *Appender) Append(inp chan map[string]interface{}) {
+	for i := range inp {
+		a.appender_conn.AppendRow(
+			i["key"],
+			i["val"])
 		a.appender_conn.Flush()
 	}
 }
