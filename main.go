@@ -1,35 +1,36 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
-	"time"
 )
+
+type ABS struct {
+	a string
+	b string
+}
 
 func main() {
 
 	d := NewDuckDBConn("")
 
-	con, err := d.Connect()
+	_, err := d.Connect()
 	if err != nil {
 		print(err)
 	}
 
 	sql.OpenDB(d.conn).Exec("CREATE TABLE test (i INTEGER)")
 
-	a := NewAppender(con, "", "test")
+	res, err := sql.OpenDB(d.conn).QueryContext(context.Background(), "DESCRIBE test")
 
-	p := NewProcess(d, "SELECT COUNT(i) FROM test")
-
-	t := time.Now()
-	for i := 0; i < 10000; i++ {
-		a.Append(int32(i))
-
-		_ = p.Run()
-
-		//		ConsoleWriter(res)
-
+	if err != nil {
+		print("Query Error")
 	}
-	fmt.Println(t.Sub(time.Now()))
+
+	var abs ABS
+	res.Next()
+	res.Scan(&abs.a, &abs.b)
+	print(abs.a)
+	print(abs.b)
 
 }

@@ -36,7 +36,7 @@ func NewAppender(con *DuckDb, schema, table string) *Appender {
 	for res.Next() {
 		var s *string
 		res.Scan(&s)
-		a.table_name[i] = s
+		a.AppendRow()
 		i++
 	}
 
