@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"fmt"
 
 	"github.com/marcboeker/go-duckdb"
@@ -16,24 +15,22 @@ type Appender struct {
 	counter       int
 }
 
-func NewAppender(con driver.Conn, schema, table string) *Appender {
-	a, err := duckdb.NewAppenderFromConn(con, schema, table)
+func NewAppender(con *DuckDb, schema, table string) *Appender {
+	d, err := con.Connect()
+	if err != nil {
+		print("Unable to connect to duckdb")
+	}
+	a, err := duckdb.NewAppenderFromConn(d, schema, table)
 	if err != nil {
 		print(err)
 	}
 
-	return &Appender{
-		appender_conn: a,
-		schema_name:   schema,
-		table_name:    table,
-	}
-}
+	res, err := sql.OpenDB(con.conn).QueryContext(context.Background(), fmt.Sprint("DESCRIBE %s", table))
 
-func (a *Appender) SetSchema(d *duckdb.Connector) {
-	res, err := sql.OpenDB(d).QueryContext(context.Background(), fmt.Sprint("DESCRIBE %s", a.table_name))
 	if err != nil {
 		print("Set schema failed")
 	}
+
 	i := 0
 
 	for res.Next() {
@@ -42,6 +39,8 @@ func (a *Appender) SetSchema(d *duckdb.Connector) {
 		a.table_name[i] = s
 		i++
 	}
+
+	return &Appender{}
 }
 func (a *Appender) CloseAppender() {
 	a.appender_conn.Close()
