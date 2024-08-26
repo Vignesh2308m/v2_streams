@@ -64,9 +64,13 @@ func (a *Appender) CloseAppender() {
 
 func (a *Appender) Append(inp chan map[string]interface{}) {
 	for i := range inp {
-		a.appender_conn.AppendRow(
-			i["key"],
-			i["val"])
-		a.appender_conn.Flush()
+		s := []any{}
+
+		for _, j := range a.column_name {
+			s = append(s, i[j])
+		}
+
+		a.appender_conn.AppendRow(s)
+
 	}
 }
