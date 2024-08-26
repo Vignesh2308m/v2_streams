@@ -10,4 +10,4 @@ Streaming plugin for DuckDb and Apache Kafka using Go
 
 
 ## Architechture
-![alt text](https://github.com/Vignesh2308m/v2_streams/blob/main/imgs/architechture.png?raw=True)
+![alt text](https://github.com/Vignesh2308m/v2_streams/blob/main/imgs/arch.png?raw=True)
